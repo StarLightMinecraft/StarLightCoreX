@@ -55,7 +55,7 @@ object PersonManager : PluginInitializeModule, Listener {
     private lateinit var mainTeam: Team
     lateinit var aliveObjective: Objective
 
-    private lateinit var task: BukkitTask
+    //private lateinit var task: BukkitTask
     private lateinit var aliveTask: BukkitTask
 
     override fun init(plugin: StarLightCoreX) {
@@ -74,15 +74,15 @@ object PersonManager : PluginInitializeModule, Listener {
             it.scoreboard = scoreboard
             mainTeam.addPlayer(it)
         }
-        aliveObjective = scoreboard.let {
-            it.getObjective("alive_time") ?: it.registerNewObjective(
-                "alive_time", "dummy", Component.text("存活时间（分钟）").color(
-                    primaryColor
-                )
-            )
-        }.also {
-            it.displaySlot = DisplaySlot.SIDEBAR
-        }
+//        aliveObjective = scoreboard.let {
+//            it.getObjective("alive_time") ?: it.registerNewObjective(
+//                "alive_time", "dummy", Component.text("存活时间（分钟）").color(
+//                    primaryColor
+//                )
+//            )
+//        }.also {
+//            it.displaySlot = DisplaySlot.SIDEBAR
+//        }
         aliveTask = Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
             Bukkit.getOnlinePlayers().mapNotNull { getStorageFor<TechnicalPlayer>(it.uniqueId) }.map { it.currentHuman }
                 .filter { it.deathTime == null }
@@ -90,15 +90,15 @@ object PersonManager : PluginInitializeModule, Listener {
                     it.aliveTimeSeconds++
                 }
         }, 0, 1 * 20L)
-        getAllStorageFor<Human>().associateWith { it.aliveTimeSeconds }.forEach {
-            aliveObjective.getScore(it.key.name).score = it.value / 60
-        }
-        task = Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
-            Bukkit.getOnlinePlayers().mapNotNull { getStorageFor<TechnicalPlayer>(it.uniqueId) }.map { it.currentHuman }
-                .associateWith { it.aliveTimeSeconds }.forEach {
-                    aliveObjective.getScore(it.key.name).score = it.value / 60
-                }
-        }, 0, 1L)
+//        getAllStorageFor<Human>().associateWith { it.aliveTimeSeconds }.forEach {
+//            aliveObjective.getScore(it.key.name).score = it.value / 60
+//        }
+//        task = Bukkit.getScheduler().runTaskTimer(plugin, Runnable {
+//            Bukkit.getOnlinePlayers().mapNotNull { getStorageFor<TechnicalPlayer>(it.uniqueId) }.map { it.currentHuman }
+//                .associateWith { it.aliveTimeSeconds }.forEach {
+//                    aliveObjective.getScore(it.key.name).score = it.value / 60
+//                }
+//        }, 0, 1L)
     }
 
     override fun tick(plugin: StarLightCoreX, currentTick: Long) {
@@ -136,9 +136,9 @@ object PersonManager : PluginInitializeModule, Listener {
         if (!aliveTask.isCancelled) {
             aliveTask.cancel()
         }
-        if (!task.isCancelled) {
-            task.cancel()
-        }
+//        if (!task.isCancelled) {
+//            task.cancel()
+//        }
         scoreboard.entries.forEach { scoreboard.resetScores(it) }
     }
 
