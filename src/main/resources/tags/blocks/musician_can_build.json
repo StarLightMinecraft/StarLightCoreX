@@ -1,0 +1,11 @@
+[
+  "NOTE_BLOCK",
+  "REDSTONE",
+  "REPEATER",
+  "COMPARATOR",
+  "PISTON",
+  "LEVER",
+  "REDSTONE_LAMP",
+  "#buttons",
+  "#pressure_plates"
+]
