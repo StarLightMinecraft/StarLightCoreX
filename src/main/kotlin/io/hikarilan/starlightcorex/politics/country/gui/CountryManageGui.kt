@@ -388,11 +388,12 @@ class CountryManageGui(
                     proxied.sendMessage(Component.text("该区块已是国家领土，无须重复设置").color(NamedTextColor.RED))
                     return@GuiElement
                 }
-                if (owner.isOnline()) {
-                    country.regions.add(Region(owner.location.chunk))
-                } else {
-                    country.regions.add(Region(proxied.location.chunk))
-                }
+                val chunk = owner.location.chunk
+                    (-1..1).flatMap {x-> (-1..1).map { z-> proxied.location.world.getChunkAt(chunk.x+x,chunk.z+z) } }
+                        .filter { c-> country.regions.none { it.checkIn(c) } }
+                        .forEach {
+                            country.regions.add(Region(it))
+                        }
                 proxied.sendMessage(Component.text("已成功将脚下的区块设置为领土").color(primaryColor))
             })
             exitButton()

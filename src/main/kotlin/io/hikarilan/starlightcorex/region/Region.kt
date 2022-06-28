@@ -1,7 +1,6 @@
 package io.hikarilan.starlightcorex.region
 
 import io.hikarilan.starlightcorex.person.Human
-import org.bukkit.Bukkit
 import org.bukkit.Chunk
 import org.bukkit.Location
 
@@ -13,8 +12,12 @@ data class Region(
 
     constructor(chunk: Chunk) : this(chunk.world.name, chunk.x, chunk.z)
 
-    fun checkIn(location:Location):Boolean{
-        return location.chunk.let { it.world.name == world && it.x == x && it.z == z }
+    fun checkIn(chunk: Chunk): Boolean {
+        return chunk.let { it.world.name == world && it.x == x && it.z == z }
+    }
+
+    fun checkIn(location: Location): Boolean {
+        return checkIn(location.chunk)
     }
 
     fun checkIn(human: Human): Boolean {
