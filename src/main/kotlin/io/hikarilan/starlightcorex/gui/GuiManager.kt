@@ -7,14 +7,12 @@ import io.hikarilan.starlightcorex.person.gui.PlayerSelfGui
 import io.hikarilan.starlightcorex.storage.getStorageFor
 import io.hikarilan.starlightcorex.utils.GeneralUtils.registerListener
 import io.hikarilan.starlightcorex.utils.PluginInitializeModule
-import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.block.Action
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.player.PlayerInteractEntityEvent
-import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.player.PlayerSwapHandItemsEvent
 
 object GuiManager : PluginInitializeModule, Listener {
 
@@ -22,9 +20,17 @@ object GuiManager : PluginInitializeModule, Listener {
         registerListener(plugin)
     }
 
+//    @EventHandler
+//    private fun onShiftClickSelf(e: PlayerInteractEvent) {
+//        if (!e.player.isSneaking || e.action != Action.RIGHT_CLICK_AIR || e.player.inventory.itemInOffHand.type != Material.AIR) return
+//        getStorageFor<TechnicalPlayer>(e.player.uniqueId)?.currentHuman?.also {
+//            PlayerSelfGui(it, it).openGUI()
+//        }
+//    }
+
     @EventHandler
-    private fun onShiftClickSelf(e: PlayerInteractEvent) {
-        if (!e.player.isSneaking || e.action != Action.RIGHT_CLICK_AIR || e.player.inventory.itemInOffHand.type != Material.AIR) return
+    private fun onShiftSwapHand(e: PlayerSwapHandItemsEvent) {
+        if (!e.player.isSneaking) return
         getStorageFor<TechnicalPlayer>(e.player.uniqueId)?.currentHuman?.also {
             PlayerSelfGui(it, it).openGUI()
         }
