@@ -3,6 +3,7 @@ package io.hikarilan.starlightcorex.person
 import io.hikarilan.starlightcorex.StarLightCoreX
 import io.hikarilan.starlightcorex.generic.bossbar.AutoIncreasedValuedLocaledBossBar
 import io.hikarilan.starlightcorex.person.events.HumanDeathEvent
+import io.hikarilan.starlightcorex.person.gui.PlayerSelfGui
 import io.hikarilan.starlightcorex.politics.country.Country
 import io.hikarilan.starlightcorex.storage.getAllStorageFor
 import io.hikarilan.starlightcorex.storage.getOrCreateStorageFor
@@ -13,6 +14,7 @@ import io.hikarilan.starlightcorex.utils.GeneralUtils.registerListener
 import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.bossbar.BossBar
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.TranslatableComponent
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.*
@@ -161,18 +163,25 @@ object PersonManager : PluginInitializeModule, Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     private fun onChat(e: AsyncChatEvent) {
         e.isCancelled = true
-        e.viewers()
-            .filter { it is Player && it.world == e.player.world && it.location.distanceSquared(e.player.location) <= 50 * 50 }
-            .forEach {
-                it.sendMessage(
-                    Component.text("💬").append(e.player.displayName())
-                        .append(Component.text(" >> ").color(NamedTextColor.WHITE)).append(e.message())
-                )
-            }
-        Bukkit.getConsoleSender().sendMessage(
-            e.player.displayName().append(Component.text("(")).append(e.player.name()).append(Component.text(")"))
-                .append(Component.text(" >> ").color(NamedTextColor.WHITE)).append(e.message())
-        )
+        val owner = getStorageFor<TechnicalPlayer>(e.player.uniqueId)?.currentHuman ?: return
+        if ((e.message() as? TextComponent)?.content()?.startsWith("##") == true) {
+            PlayerSelfGui.broadcastMessageLarge(e.player,owner,(e.message() as TextComponent).apply { content(content().substring(2)) }.content(),owner)
+        } else if ((e.message() as? TextComponent)?.content()?.startsWith("#") == true) {
+            PlayerSelfGui.broadcastMessageSmall(e.player,owner,(e.message() as TextComponent).apply { content(content().substring(1)) }.content(),owner)
+        } else {
+            e.viewers()
+                .filter { it is Player && it.world == e.player.world && it.location.distanceSquared(e.player.location) <= 50 * 50 }
+                .forEach {
+                    it.sendMessage(
+                        Component.text("💬").append(e.player.displayName())
+                            .append(Component.text(" >> ").color(NamedTextColor.WHITE)).append(e.message())
+                    )
+                }
+            Bukkit.getConsoleSender().sendMessage(
+                e.player.displayName().append(Component.text("(")).append(e.player.name()).append(Component.text(")"))
+                    .append(Component.text(" >> ").color(NamedTextColor.WHITE)).append(e.message())
+            )
+        }
     }
 
     @EventHandler

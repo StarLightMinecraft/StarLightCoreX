@@ -17,7 +17,7 @@ import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Bukkit
 import org.bukkit.Material
-import org.bukkit.block.data.Directional
+import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.SkullMeta
 import kotlin.math.roundToInt
@@ -26,6 +26,109 @@ class PlayerSelfGui(
     owner: Human,
     proxied: Human,
 ) : GuiBase(owner = owner, title = Component.text("个人管理面板").color(primaryColor), proxied = proxied) {
+
+    companion object{
+
+        fun broadcastMessageSmall(
+            player: Player,
+            owner: Human,
+            message: String,
+            proxied: Human
+        ) {
+            if (player.foodLevel >= 2) {
+                Bukkit.getConsoleSender().sendMessage(
+                    Component.text("(500M)喊话 ").append(Component.text(owner.name))
+                        .append(Component.text("("))
+                        .append(Component.text(owner.technicalPlayer.bukkitPlayer.name ?: ""))
+                        .append(Component.text(")"))
+                        .append(Component.text(" >> ").color(NamedTextColor.WHITE))
+                        .append(message.toMiniMessage())
+                )
+                Bukkit.getOnlinePlayers()
+                    .filter {
+                        it.location.world == player.location.world && it.location.distanceSquared(
+                            player.location
+                        ) <= 500 * 500
+                    }
+                    .mapNotNull { getStorageFor<TechnicalPlayer>(it.uniqueId) }.forEach {
+                        val base =
+                            Component.text("\uD83D\uDD0A").append(Component.text(owner.name))
+                                .append(Component.text(" >> ").color(NamedTextColor.WHITE))
+                                .append(message.toMiniMessage())
+                        if (it.currentHuman == owner) {
+                            it.sendMessage(base)
+                        } else {
+                            it.sendMessage(
+                                base.append(
+                                    Component.text(
+                                        "（来自向北 ${
+                                            GeneralUtils.getDirectionBetween(
+                                                player.location,
+                                                it.bukkitPlayer.player!!.location
+                                            ).roundToInt()
+                                        }° 角方向）"
+                                    ).color(
+                                        secondaryColorVariant
+                                    )
+                                )
+                            )
+                        }
+                        it.bukkitPlayer.player?.playSound(
+                            Sound.sound(
+                                org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP,
+                                Sound.Source.PLAYER,
+                                MAX_VOLUME,
+                                DEFAULT_PITCH
+                            ),
+                            player.location.x,
+                            player.location.y,
+                            player.location.z
+                        )
+                    }
+                player.foodLevel -= 2
+            } else proxied.sendMessage(Component.text("饥饿度不足").color(secondaryColor))
+        }
+
+        fun broadcastMessageLarge(
+            player: Player,
+            owner: Human,
+            message: String,
+            proxied: Human
+        ) {
+            if (player.foodLevel >= 10) {
+                Bukkit.getConsoleSender().sendMessage(
+                    Component.text("(全服)喊话 ").append(Component.text(owner.name))
+                        .append(Component.text("("))
+                        .append(Component.text(owner.technicalPlayer.bukkitPlayer.name ?: ""))
+                        .append(Component.text(")"))
+                        .append(Component.text(" >> ").color(NamedTextColor.WHITE))
+                        .append(message.toMiniMessage())
+                )
+                Bukkit.getOnlinePlayers()
+                    .mapNotNull { getStorageFor<TechnicalPlayer>(it.uniqueId) }
+                    .forEach {
+                        it.sendMessage(
+                            Component.text("\uD83D\uDD0A").append(Component.text(owner.name))
+                                .append(Component.text(" >> ").color(NamedTextColor.WHITE))
+                                .append(message.toMiniMessage())
+                        )
+                        it.bukkitPlayer.player?.playSound(
+                            Sound.sound(
+                                org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP,
+                                Sound.Source.PLAYER,
+                                MAX_VOLUME,
+                                DEFAULT_PITCH
+                            ),
+                            player.location.x,
+                            player.location.y,
+                            player.location.z
+                        )
+                    }
+                player.foodLevel -= 10
+            } else proxied.sendMessage(Component.text("饥饿度不足").color(secondaryColor))
+        }
+
+    }
 
     override fun openGUI() {
         if (/*序列化兼容性*/owner.candidateAbilities==null || owner.hasSelectedCandidateAbilities || owner.candidateAbilities.isEmpty()) {
@@ -190,58 +293,7 @@ class PlayerSelfGui(
                         prompt = { _ -> Component.text("请输入要喊话的内容").color(secondaryColor) },
                         acceptInput = { input, _ ->
                             input?.let { i ->
-                                if (player.foodLevel >= 2) {
-                                    Bukkit.getConsoleSender().sendMessage(
-                                        Component.text("(500M)喊话 ").append(Component.text(owner.name))
-                                            .append(Component.text("("))
-                                            .append(Component.text(owner.technicalPlayer.bukkitPlayer.name ?: ""))
-                                            .append(Component.text(")"))
-                                            .append(Component.text(" >> ").color(NamedTextColor.WHITE))
-                                            .append(i.toMiniMessage())
-                                    )
-                                    Bukkit.getOnlinePlayers()
-                                        .filter {
-                                            it.location.world == player.location.world && it.location.distanceSquared(
-                                                player.location
-                                            ) <= 500 * 500
-                                        }
-                                        .mapNotNull { getStorageFor<TechnicalPlayer>(it.uniqueId) }.forEach {
-                                            val base =
-                                                Component.text("\uD83D\uDD0A").append(Component.text(owner.name))
-                                                    .append(Component.text(" >> ").color(NamedTextColor.WHITE))
-                                                    .append(i.toMiniMessage())
-                                            if (it.currentHuman == owner) {
-                                                it.sendMessage(base)
-                                            } else {
-                                                it.sendMessage(
-                                                    base.append(
-                                                        Component.text(
-                                                            "（来自向北 ${
-                                                                GeneralUtils.getDirectionBetween(
-                                                                    player.location,
-                                                                    it.bukkitPlayer.player!!.location
-                                                                ).roundToInt()
-                                                            }° 角方向）"
-                                                        ).color(
-                                                            secondaryColorVariant
-                                                        )
-                                                    )
-                                                )
-                                            }
-                                            it.bukkitPlayer.player?.playSound(
-                                                Sound.sound(
-                                                    org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP,
-                                                    Sound.Source.PLAYER,
-                                                    MAX_VOLUME,
-                                                    DEFAULT_PITCH
-                                                ),
-                                                player.location.x,
-                                                player.location.y,
-                                                player.location.z
-                                            )
-                                        }
-                                    player.foodLevel -= 2
-                                } else proxied.sendMessage(Component.text("饥饿度不足").color(secondaryColor))
+                                broadcastMessageSmall(player, owner, i, proxied)
                             }
                             mapOf()
                         }
@@ -266,37 +318,7 @@ class PlayerSelfGui(
                         prompt = { _ -> Component.text("请输入要喊话的内容").color(secondaryColor) },
                         acceptInput = { input, _ ->
                             input?.let { i ->
-                                if (player.foodLevel >= 10) {
-                                    Bukkit.getConsoleSender().sendMessage(
-                                        Component.text("(全服)喊话 ").append(Component.text(owner.name))
-                                            .append(Component.text("("))
-                                            .append(Component.text(owner.technicalPlayer.bukkitPlayer.name ?: ""))
-                                            .append(Component.text(")"))
-                                            .append(Component.text(" >> ").color(NamedTextColor.WHITE))
-                                            .append(i.toMiniMessage())
-                                    )
-                                    Bukkit.getOnlinePlayers()
-                                        .mapNotNull { getStorageFor<TechnicalPlayer>(it.uniqueId) }
-                                        .forEach {
-                                            it.sendMessage(
-                                                Component.text("\uD83D\uDD0A").append(Component.text(owner.name))
-                                                    .append(Component.text(" >> ").color(NamedTextColor.WHITE))
-                                                    .append(i.toMiniMessage())
-                                            )
-                                            it.bukkitPlayer.player?.playSound(
-                                                Sound.sound(
-                                                    org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP,
-                                                    Sound.Source.PLAYER,
-                                                    MAX_VOLUME,
-                                                    DEFAULT_PITCH
-                                                ),
-                                                player.location.x,
-                                                player.location.y,
-                                                player.location.z
-                                            )
-                                        }
-                                    player.foodLevel -= 10
-                                } else proxied.sendMessage(Component.text("饥饿度不足").color(secondaryColor))
+                                broadcastMessageLarge(player, owner, i, proxied)
                             }
                             mapOf()
                         }
